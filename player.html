@@ -8,137 +8,143 @@
     <link href="https://i.ibb.co/PGJ87dN5/cineveo-logo-r.png" rel="icon" type="image/png"/>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0A0A0A;
-        }
-        
-        /* ESTILOS PARA O NOVO PLAYER (PLYR) */
-        :root {
-            --plyr-color-main: #E50914; /* Cor principal (vermelho BAEFLIX) */
-            --plyr-font-family: 'Inter', sans-serif;
-        }
-
-        .loader {
-            border: 4px solid #4A4A4A;
-            border-top: 4px solid #E50914;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #0A0A0A; }
+        :root { --plyr-color-main: #E50914; --plyr-font-family: 'Inter', sans-serif; }
+        .loader { border: 4px solid #4A4A4A; border-top: 4px solid #E50914; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-black text-gray-300">
-
-<header class="bg-gray-900/50 backdrop-blur-md shadow-lg sticky top-0 z-40 border-b border-gray-800">
-    <nav class="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <a aria-label="Página Inicial" href="/index.html">
-            <img alt="Logo BAEFLIX" class="h-16 w-auto" src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png"/>
-        </a>
-    </nav>
-</header>
-
-<main class="container mx-auto p-4 md:p-8">
-    <div class="mb-4">
-        <h1 class="text-2xl md:text-4xl font-black text-white mb-4" id="video-title">Carregando informações do filme...</h1>
-    </div>
-    
-    <div id="player-container" class="w-full bg-black rounded-lg shadow-2xl overflow-hidden mb-8">
-        <video id="player" playsinline controls>
-            </video>
-    </div>
-</main>
-
-<script type="module">
-    document.addEventListener('DOMContentLoaded', async () => {
+    <header class="bg-gray-900/50 backdrop-blur-md shadow-lg sticky top-0 z-40 border-b border-gray-800">
+        <nav class="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+            <a aria-label="Página Inicial" href="/index.html"> <img alt="Logo BAEFLIX" class="h-16 w-auto" src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png"/> </a>
+        </nav>
+    </header>
+    <main class="container mx-auto p-4 md:p-8">
+        <div class="mb-4">
+            <h1 class="text-2xl md:text-4xl font-black text-white mb-2" id="video-title">Carregando...</h1>
+            <p class="text-gray-400" id="video-description"></p>
+        </div>
+        <div id="player-container" class="w-full bg-black rounded-lg shadow-2xl overflow-hidden mb-6">
+            <div class="aspect-video w-full">
+                 <video id="player" playsinline controls></video>
+            </div>
+        </div>
+        <div id="quality-selector-container">
+            <h2 class="text-xl font-bold text-white mb-3">Opções de Áudio:</h2>
+            <div id="quality-buttons" class="flex flex-wrap gap-3"></div>
+        </div>
+    </main>
+    <script type="module">
         const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
-        const STREAM_API_URLS = [
-          "https://baby-beamup.club/stream/movie",
-          "https://da5f663b4690-skyflixfork.baby-beamup.club/stream/movie",
-        ];
-        // O "serviço de ponte" para evitar o bloqueio de conexão
+        const STREAM_API_URLS = {
+            movie: ["https://baby-beamup.club/stream/movie", "https://da5f663b4690-skyflixfork.baby-beamup.club/stream/movie"],
+            tv: ["https://baby-beamup.club/stream/series", "https://da5f663b4690-skyflixfork.baby-beamup.club/stream/series"]
+        };
         const CORS_PROXY = "https://corsproxy.io/?";
 
         const titleElement = document.getElementById('video-title');
+        const descriptionElement = document.getElementById('video-description');
         const playerContainer = document.getElementById('player-container');
+        const qualityButtons = document.getElementById('quality-buttons');
+        
+        let player;
 
-        // Mostra o loader enquanto tudo carrega
-        playerContainer.innerHTML = `
-            <div class="aspect-video w-full flex items-center justify-center flex-col bg-black rounded-lg">
-                <div class="loader"></div>
-                <p class="mt-4 text-gray-400">Buscando link do stream...</p>
-            </div>`;
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const tmdbId = urlParams.get('id');
-
-        if (!tmdbId) {
-            titleElement.textContent = "Erro: ID do filme não encontrado na URL.";
-            playerContainer.innerHTML = `<div class="aspect-video w-full flex items-center justify-center"><p class="text-red-500">Não foi possível carregar o player.</p></div>`;
-            return;
-        }
-
-        try {
-            // Busca os detalhes do filme no TMDB para mostrar o título
-            const tmdbDetailsResponse = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`);
-            const movieDetails = await tmdbDetailsResponse.json();
-            if (movieDetails.title) {
-                titleElement.textContent = movieDetails.title;
-                document.title = `Assistindo: ${movieDetails.title} - BAEFLIX`;
-            }
-
-            // Busca o IMDb ID, necessário para a API de stream
-            const externalIdsResponse = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`);
-            const ids = await externalIdsResponse.json();
-            const imdbId = ids.imdb_id;
-            if (!imdbId) throw new Error("IMDb ID não encontrado para este filme.");
-
-            let streamUrl = null;
-
-            // Tenta buscar o stream em cada uma das fontes
-            for (const baseUrl of STREAM_API_URLS) {
-                const fullUrl = `${baseUrl}/${imdbId}.json`;
+        async function fetchStreamData(url) {
+            for (const baseUrl of url) {
                 try {
-                    // **A MÁGICA ACONTECE AQUI**: Usamos o proxy para fazer a chamada
-                    const streamApiResponse = await fetch(CORS_PROXY + encodeURIComponent(fullUrl));
-                    if (streamApiResponse.ok) {
-                        const streamData = await streamApiResponse.json();
-                        if (streamData.streams && streamData.streams.length > 0) {
-                            streamUrl = streamData.streams[0].url;
-                            break; // Se encontrou, para de procurar
-                        }
+                    const response = await fetch(CORS_PROXY + encodeURIComponent(baseUrl));
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.streams && data.streams.length > 0) return data.streams;
                     }
-                } catch (e) { /* Tenta a próxima URL */ }
+                } catch (e) { console.warn(`Falha ao buscar de ${baseUrl}`, e); }
             }
-            
-            if (streamUrl) {
-                // Se encontrou um link, substitui o loader pelo player de vídeo real
-                playerContainer.innerHTML = `<video id="player" playsinline controls data-poster="${'https://image.tmdb.org/t/p/original' + movieDetails.backdrop_path}"><source src="${streamUrl}" type="video/mp4" /></video>`;
-                
-                // INICIA O PLAYER BONITO (PLYR)
-                const player = new Plyr('#player');
-            } else {
-                throw new Error("Nenhum stream disponível foi encontrado em nenhuma das fontes.");
-            }
-
-        } catch (error) {
-            console.error("Erro final ao carregar o player:", error);
-            titleElement.textContent = "Erro ao carregar o filme";
-            playerContainer.innerHTML = `<div class="aspect-video w-full flex items-center justify-center text-center p-4"><p class="text-red-500">${error.message}</p></div>`;
+            return null;
         }
-    });
-</script>
 
+        function loadStreamIntoPlayer(streamUrl) {
+            if (player) {
+                player.source = {
+                    type: 'video',
+                    sources: [{ src: streamUrl, type: 'video/mp4' }],
+                };
+                player.play();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mediaId = urlParams.get('id');
+            const season = urlParams.get('s');
+            const episode = urlParams.get('e');
+            const type = season ? 'tv' : 'movie'; // Se tem temporada, é uma série
+
+            if (!mediaId) {
+                titleElement.textContent = "Erro: ID não encontrado.";
+                return;
+            }
+
+            try {
+                // Inicia o player vazio
+                player = new Plyr('#player');
+                
+                // Busca detalhes do TMDB
+                const detailsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}${type === 'tv' ? `/season/${season}/episode/${episode}` : ''}?api_key=${TMDB_API_KEY}&language=pt-BR`;
+                const detailsResponse = await fetch(detailsUrl);
+                const detailsData = await detailsResponse.json();
+                
+                const title = detailsData.title || detailsData.name;
+                titleElement.textContent = title;
+                descriptionElement.textContent = type === 'tv' ? `Temporada ${season}, Episódio ${episode}` : '';
+                document.title = `Assistindo: ${title} - BAEFLIX`;
+
+                // Busca o IMDb ID
+                const externalIdsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}/external_ids?api_key=${TMDB_API_KEY}`;
+                const idsResponse = await fetch(externalIdsUrl);
+                const idsData = await idsResponse.json();
+                const imdbId = idsData.imdb_id;
+                if (!imdbId) throw new Error("IMDb ID não encontrado.");
+
+                // Monta as URLs de busca de stream
+                const streamUrlsToTry = STREAM_API_URLS[type].map(baseUrl => 
+                    type === 'tv' ? `${baseUrl}/${imdbId}:${season}:${episode}.json` : `${baseUrl}/${imdbId}.json`
+                );
+                
+                // Busca os streams
+                const streams = await fetchStreamData(streamUrlsToTry);
+                if (!streams) throw new Error("Nenhum stream encontrado.");
+
+                qualityButtons.innerHTML = '';
+                streams.forEach((stream, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'bg-gray-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors';
+                    btn.textContent = stream.description || stream.name || `Opção ${index + 1}`;
+                    btn.onclick = () => {
+                        // Remove a classe de 'ativo' de outros botões
+                        document.querySelectorAll('#quality-buttons button').forEach(b => b.classList.remove('bg-red-600'));
+                        // Adiciona a classe no botão clicado
+                        btn.classList.add('bg-red-600');
+                        loadStreamIntoPlayer(stream.url);
+                    };
+                    qualityButtons.appendChild(btn);
+                });
+                
+                // Carrega o primeiro stream por padrão e o marca como ativo
+                if (qualityButtons.firstChild) {
+                    qualityButtons.firstChild.click();
+                }
+                
+            } catch (error) {
+                console.error("Erro ao carregar o player:", error);
+                titleElement.textContent = "Erro ao carregar";
+                descriptionElement.textContent = error.message;
+            }
+        });
+    </script>
 </body>
 </html>
