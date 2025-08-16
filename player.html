@@ -19,6 +19,7 @@
             height: 0;
             overflow: hidden;
             background-color: #000;
+            border-radius: 0.5rem;
         }
         .player-wrapper iframe {
             position: absolute;
@@ -52,11 +53,11 @@
     </nav>
 </header>
 
-<main class="container mx-auto p-4 md:px-8 max-w-7xl">
+<main class="container mx-auto p-4 md:p-8">
     <div class="mb-4">
-        <h1 class="text-2xl md:text-4xl font-black text-white mb-4" id="video-title">Carregando informações...</h1>
+        <h1 class="text-2xl md:text-4xl font-black text-white mb-4" id="video-title">Carregando informações do filme...</h1>
     </div>
-
+    
     <div id="player-container" class="w-full bg-black rounded-lg shadow-2xl overflow-hidden mb-8">
         <div class="player-wrapper" id="player-wrapper">
             <div class="absolute inset-0 flex items-center justify-center flex-col">
@@ -69,61 +70,74 @@
 
 <script type="module">
     document.addEventListener('DOMContentLoaded', async () => {
-        // IMPORTANT: Replace with your actual TMDB API Key
-        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e"; 
+        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e"; // Sua chave TMDB
 
         const titleElement = document.getElementById('video-title');
         const playerWrapper = document.getElementById('player-wrapper');
-
         const urlParams = new URLSearchParams(window.location.search);
-        const tmdbId = urlParams.get('id');
+        
+        // Supondo que você passe o ID como ?tmdbId=123
+        const tmdbId = urlParams.get('tmdbId'); 
+        // Você vai precisar do IMDb ID também, talvez precise buscá-lo primeiro
+        // ou passá-lo na URL, ex: ?tmdbId=123&imdbId=tt0120338
+        const imdbId = urlParams.get('imdbId'); 
 
-        if (!tmdbId) {
-            titleElement.textContent = "Erro: ID do conteúdo não encontrado na URL.";
-            playerWrapper.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><p class="text-red-500">Não foi possível carregar o player.</p></div>`;
+        if (!tmdbId || !imdbId) {
+            titleElement.textContent = "Erro: Faltando ID do filme na URL.";
             return;
         }
 
         try {
-            // Fetch movie details from TMDB to display the title
+            // 1. Busca os detalhes do filme no TMDB para mostrar o título
             const tmdbDetailsResponse = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`);
-            if (!tmdbDetailsResponse.ok) {
-                 throw new Error(`Erro ao buscar detalhes do filme: ${tmdbDetailsResponse.status}`);
-            }
             const movieDetails = await tmdbDetailsResponse.json();
-            
             if (movieDetails.title) {
                 titleElement.textContent = movieDetails.title;
                 document.title = `Assistindo: ${movieDetails.title} - BAEFLIX`;
             }
 
-            // Call your Firebase Function API to get the stream link
-            const streamApiResponse = await fetch(`/api/movie?id=${tmdbId}`);
+            // 2. Chama a SUA API na Vercel para pegar o link do stream
+            //    Note a nova URL: /api/stream/movie/{imdbId}
+            const streamApiResponse = await fetch(`/api/stream/movie/${imdbId}`);
             if (!streamApiResponse.ok) {
-                throw new Error(`Sua API (Firebase Function) respondeu com um erro: ${streamApiResponse.status}`);
+                throw new Error(`Sua API de stream respondeu com erro: ${streamApiResponse.status}`);
             }
             const streamData = await streamApiResponse.json();
 
-            // Check if the API returned a valid stream URL
-            if (streamData.streams && streamData.streams.length > 0 && streamData.streams[0].url) {
-                const streamUrl = streamData.streams[0].url;
-                console.log("Stream URL recebida:", streamUrl);
+            // 3. Verifica se a API encontrou um link
+            if (streamData.streams && streamData.streams.length > 0) {
+                const streamInfo = streamData.streams[0]; // Pega o primeiro stream da lista
+                const originalStreamUrl = streamInfo.url;
 
-                // Create the iframe and place it in the player
+                // 4. PREPARA A URL DO PROXY
+                // O proxy é necessário por causa do behaviorHints.notWebReady:true
+                const proxyUrl = new URL('/api/proxy', window.location.origin);
+                proxyUrl.searchParams.set('videoUrl', originalStreamUrl);
+
+                // Se houver cabeçalhos (headers) necessários, codifica e anexa eles
+                if (streamInfo.behaviorHints?.proxyHeaders?.request) {
+                    const headers = streamInfo.behaviorHints.proxyHeaders.request;
+                    const encodedHeaders = encodeURIComponent(JSON.stringify(headers));
+                    proxyUrl.searchParams.set('headers', encodedHeaders);
+                }
+                
+                console.log("URL final do Player (via proxy):", proxyUrl.href);
+
+                // 5. Cria o <iframe> e o coloca no player usando a URL do SEU PROXY
                 playerWrapper.innerHTML = `
                     <iframe 
                         id="video-player-iframe" 
-                        src="${streamUrl}" 
+                        src="${proxyUrl.href}" 
                         allowfullscreen 
                         allow="autoplay; encrypted-media"
                     ></iframe>
                 `;
             } else {
-                throw new Error(streamData.error || "Nenhum stream disponível foi encontrado pela sua API.");
+                throw new Error(streamData.error || "Nenhum stream disponível encontrado pela API.");
             }
         } catch (error) {
             console.error("Erro final ao carregar o player:", error);
-            titleElement.textContent = "Erro ao Carregar o Filme";
+            titleElement.textContent = "Erro ao carregar o filme";
             playerWrapper.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-center p-4"><p class="text-red-500">${error.message}</p></div>`;
         }
     });
