@@ -15,18 +15,8 @@
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 
     <style>
-        /* Configurações Globais */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0c0c0f; /* Fundo preto padrão */
-            overflow-x: hidden;
-        }
-        /* Cor dos botões de navegação do Swiper */
-        :root {
-            --swiper-theme-color: #E50914; /* Vermelho BAEFLIX */
-        }
-
-        /* Estilos do Carrossel Principal (Hero) */
+        body { font-family: 'Inter', sans-serif; background-color: #0c0c0f; overflow-x: hidden; }
+        :root { --swiper-theme-color: #E50914; }
         .hero-swiper { width: 100%; height: 85vh; }
         .swiper-slide { position: relative; display: flex; justify-content: center; align-items: center; }
         .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -34,105 +24,54 @@
         .slide-content { position: absolute; bottom: 10%; left: 0; width: 100%; z-index: 10; }
         .swiper-button-next, .swiper-button-prev { color: #fff !important; background-color: rgba(0,0,0,0.3); border-radius: 50%; width: 50px; height: 50px; }
         .swiper-button-next:after, .swiper-button-prev:after { font-size: 24px !important; font-weight: bold; }
-        
-        /* Estilos dos Cards de Filmes/Séries */
-        .movie-card {
-            position: relative;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
+        .movie-card { position: relative; border-radius: 0.5rem; overflow: hidden; cursor: pointer; transition: transform 0.3s ease; }
         .movie-card:hover { transform: scale(1.05); }
-        .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease, filter 0.4s ease; }
-        .movie-card:hover .card-img { transform: scale(1.1); filter: blur(4px) brightness(0.6); }
-        .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.4s ease; }
-        .movie-card:hover .play-overlay { opacity: 1; }
-        .play-button-icon {
-            width: 60px; height: 60px; background-color: rgba(229, 9, 20, 0.8);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; transform: scale(0.8); transition: transform 0.3s ease; padding-left: 5px; box-sizing: border-box;
-        }
-        .movie-card:hover .play-button-icon { transform: scale(1); }
-
-        /* Página de Detalhes */
-        #details-page {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background-color: #0c0c0f; z-index: 60; overflow-y: auto;
-            transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
-        }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        #details-page { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: #0c0c0f; z-index: 60; overflow-y: auto; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1); }
         #details-page.visible { transform: translateX(0); }
         .backdrop-img { position: absolute; top: 0; left: 0; width: 100%; height: 60vh; object-fit: cover; z-index: -1; }
         .backdrop-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 60vh; background: linear-gradient(to top, #0c0c0f 15%, transparent 100%); z-index: -1; }
     </style>
 </head>
 <body class="text-white">
-
     <header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center space-x-8">
-                    <a href="#">
-                        <img src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png" alt="BAEFLIX Logo" class="h-16 w-auto">
-                    </a>
+                    <a href="/"> <img src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png" alt="BAEFLIX Logo" class="h-16 w-auto"> </a>
                     <nav id="main-nav" class="hidden md:flex items-center space-x-4">
                         <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white" data-content="filmes">Filmes</a>
                         <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium" data-content="series">Séries</a>
                     </nav>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <input type="text" id="searchInput" placeholder="Procurar" class="bg-black bg-opacity-20 border border-gray-700 rounded-md py-1 px-3 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-colors w-32 sm:w-48">
-                </div>
+                <div class="flex items-center space-x-4"> <input type="text" id="searchInput" placeholder="Procurar" class="bg-black bg-opacity-20 border border-gray-700 rounded-md py-1 px-3 text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-colors w-32 sm:w-48"> </div>
             </div>
         </div>
     </header>
-
     <main id="main-content" class="pt-20">
         <section class="relative">
-             <div class="swiper-container hero-swiper">
-                <div class="swiper-wrapper" id="hero-wrapper">
-                    </div>
+            <div class="swiper-container hero-swiper">
+                <div class="swiper-wrapper" id="hero-wrapper"></div>
                 <div class="swiper-pagination"></div>
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
         </section>
-
         <section id="content-area" class="container mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12">
             <h2 id="grid-title" class="text-2xl font-bold mb-4">Filmes Populares</h2>
-            <div id="media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                </div>
+            <div id="media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
         </section>
     </main>
-
     <div id="details-page">
-        <button id="back-btn" class="fixed top-6 left-6 z-20 bg-black/50 p-2 rounded-full text-white hover:bg-white/20 transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
+        <button id="back-btn" class="fixed top-6 left-6 z-20 bg-black/50 p-2 rounded-full text-white hover:bg-white/20 transition-colors"> <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> </button>
         <div id="details-content" class="relative"></div>
     </div>
-
-    <div id="video-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[100] hidden">
-        <div class="w-full max-w-4xl aspect-video relative">
-            <button id="close-video-modal-btn" class="absolute -top-10 right-0 text-white text-4xl font-bold z-10">&times;</button>
-            <video id="video-player" class="w-full h-full" controls autoplay controlsList="nodownload"></video>
-        </div>
-    </div>
-
-    <footer class="bg-black bg-opacity-30 border-t border-gray-800 mt-auto">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-400">
-            <p>&copy; 2025 BAEFLIX. Todos os direitos reservados.</p>
-        </div>
-    </footer>
-
     <script type="module">
-        // --- Configuração das APIs ---
         const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
         const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
         const TMDB_IMAGE_BASE_URL_W500 = "https://image.tmdb.org/t/p/w500";
         const TMDB_IMAGE_BASE_URL_ORIGINAL = "https://image.tmdb.org/t/p/original";
         
-        // --- Elementos da UI ---
         const mainNav = document.getElementById('main-nav');
         const mediaGrid = document.getElementById('media-grid');
         const gridTitle = document.getElementById('grid-title');
@@ -141,184 +80,100 @@
         const detailsPage = document.getElementById('details-page');
         const detailsContent = document.getElementById('details-content');
         const backBtn = document.getElementById('back-btn');
-        const videoModal = document.getElementById('video-modal');
-        const videoPlayer = document.getElementById('video-player');
-        const closeVideoBtn = document.getElementById('close-video-modal-btn');
-        const searchInput = document.getElementById('searchInput');
 
-        // --- FUNÇÕES DE CRIAÇÃO DE HTML ---
-        function createMediaCard(media) {
-            const isMovie = media.media_type === 'movie';
-            const title = isMovie ? media.title : media.name;
-            const posterUrl = media.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${media.poster_path}` : 'https://placehold.co/500x750/1a1a1a/ffffff?text=Capa';
-            
-            return `
-                <div class="aspect-[2/3] movie-card" data-id="${media.id}" data-type="${media.media_type}">
-                    <img src="${posterUrl}" alt="Poster de ${title}" class="card-img">
-                    <div class="play-overlay">
-                        <div class="play-button-icon">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
-                        </div>
-                    </div>
-                </div>`;
-        }
-        
-        function createHeroSlide(media) {
-            const isMovie = media.media_type === 'movie';
-            const title = isMovie ? media.title : media.name;
-            const backdropUrl = media.backdrop_path ? `${TMDB_IMAGE_BASE_URL_ORIGINAL}${media.backdrop_path}`: '';
-
-            return `
-                <div class="swiper-slide">
-                    <img src="${backdropUrl}" alt="Destaque ${title}">
-                    <div class="slide-overlay"></div>
-                    <div class="slide-content">
-                        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-                            <div class="max-w-xl text-left">
-                                <h1 class="text-4xl md:text-6xl font-black uppercase tracking-wider">${title}</h1>
-                                <p class="text-gray-300 leading-relaxed my-4 line-clamp-3">${media.overview}</p>
-                                <button class="inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg transition-transform hover:scale-105 duration-300 watch-btn-hero" data-id="${media.id}" data-type="${media.media_type}">
-                                    <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-                                    Assistir Agora
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        // --- FUNÇÕES DE BUSCA DE DADOS ---
         async function fetchAPI(endpoint) {
             const url = `${TMDB_API_BASE_URL}/${endpoint}?api_key=${TMDB_API_KEY}&language=pt-BR`;
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
-                return await response.json();
-            } catch (error) {
-                console.error("Falha ao buscar dados da API:", error);
-                mediaGrid.innerHTML = `<p class="text-red-500 col-span-full text-center">Ocorreu um erro ao carregar o conteúdo. Verifique o console.</p>`;
-                return null;
-            }
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
+            return await response.json();
+        }
+
+        function createMediaCard(media) {
+            const title = media.title || media.name;
+            const posterUrl = media.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${media.poster_path}` : 'https://placehold.co/500x750/1a1a1a/ffffff?text=Capa';
+            return `<div class="aspect-[2/3] movie-card" data-id="${media.id}" data-type="${media.media_type || (media.title ? 'movie' : 'tv')}"><img src="${posterUrl}" alt="Poster de ${title}" class="card-img"></div>`;
         }
 
         async function displayMedia(type = 'movie') {
             const endpoint = type === 'movie' ? 'movie/popular' : 'tv/popular';
             gridTitle.textContent = type === 'movie' ? 'Filmes Populares' : 'Séries Populares';
             mediaGrid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Carregando...</p>';
-            
             const data = await fetchAPI(endpoint);
             if (data && data.results) {
-                mediaGrid.innerHTML = ''; 
-                data.results.forEach(media => {
-                    media.media_type = type;
-                    mediaGrid.innerHTML += createMediaCard(media);
-                });
-            }
-        }
-        
-        async function displayHeroSlides() {
-            const data = await fetchAPI('movie/popular');
-            if (data && data.results) {
-                heroWrapper.innerHTML = '';
-                data.results.slice(0, 5).forEach(media => {
-                    media.media_type = 'movie';
-                    heroWrapper.innerHTML += createHeroSlide(media);
-                });
-
-                new Swiper('.hero-swiper', { 
-                    loop: true, 
-                    autoplay: { delay: 5000, disableOnInteraction: false }, 
-                    pagination: { el: '.swiper-pagination', clickable: true }, 
-                    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } 
-                });
+                mediaGrid.innerHTML = data.results.map(media => createMediaCard(media)).join('');
             }
         }
 
-        async function displaySearchResults(query) {
-            if (!query) {
-                displayMedia('movie');
-                return;
-            }
-            gridTitle.textContent = `Resultados para: "${query}"`;
-            mediaGrid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Buscando...</p>';
-            const data = await fetchAPI(`search/multi&query=${encodeURIComponent(query)}`);
-            if (data && data.results) {
-                mediaGrid.innerHTML = '';
-                const validResults = data.results.filter(m => (m.media_type === 'movie' || m.media_type === 'tv') && m.poster_path);
-                if (validResults.length === 0) {
-                    mediaGrid.innerHTML = '<p class="text-gray-400 col-span-full text-center">Nenhum resultado encontrado.</p>';
-                } else {
-                    validResults.forEach(media => {
-                        mediaGrid.innerHTML += createMediaCard(media);
-                    });
-                }
-            }
-        }
-
-        // --- FUNÇÕES DE INTERAÇÃO ---
         async function showDetailsPage(mediaId, mediaType) {
             const data = await fetchAPI(`${mediaType}/${mediaId}`);
-            if (!data) return;
-            
-            const isMovie = mediaType === 'movie';
-            const title = isMovie ? data.title : data.name;
-            const releaseDate = isMovie ? data.release_date : data.first_air_date;
-            const year = releaseDate ? releaseDate.split('-')[0] : 'N/A';
+            const title = data.title || data.name;
             const overview = data.overview || 'Sinopse não disponível.';
             const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL_ORIGINAL}${data.backdrop_path}` : '';
-            const posterUrl = data.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${data.poster_path}` : 'https://placehold.co/500x750/1a1a1a/ffffff?text=Capa';
-            const genres = data.genres.map(g => g.name).join(', ');
+            const posterUrl = data.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${data.poster_path}` : '';
 
-            detailsContent.innerHTML = `
-                <div class="relative">
-                    <img src="${backdropUrl}" alt="Fundo de ${title}" class="backdrop-img">
-                    <div class="backdrop-overlay"></div>
-                </div>
+            let contentHtml = `
+                <div class="relative"><img src="${backdropUrl}" class="backdrop-img"><div class="backdrop-overlay"></div></div>
                 <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-[40vh] pb-16">
                     <div class="md:flex md:gap-8">
-                        <div class="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 -mt-24 md:-mt-32">
-                            <img src="${posterUrl}" alt="Poster de ${title}" class="w-full rounded-lg shadow-2xl">
-                        </div>
+                        <div class="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 -mt-24 md:-mt-32"><img src="${posterUrl}" class="w-full rounded-lg shadow-2xl"></div>
                         <div class="mt-6 md:mt-0 text-center md:text-left">
                             <h1 class="text-3xl md:text-5xl font-bold">${title}</h1>
-                            <div class="text-gray-400 mt-2">${year} &bull; ${genres}</div>
                             <p class="mt-4 text-gray-300 max-w-2xl">${overview}</p>
-                            <button class="watch-btn mt-6 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300" data-id="${mediaId}" data-type="${mediaType}">
-                                Assistir Agora
-                            </button>
+                            ${mediaType === 'movie' ? `<button class="watch-btn mt-6 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg" data-id="${mediaId}" data-type="movie">Assistir Agora</button>` : ''}
                         </div>
                     </div>
+                    ${mediaType === 'tv' ? `<div id="seasons-container" class="mt-12"></div>` : ''}
                 </div>`;
+            detailsContent.innerHTML = contentHtml;
             mainContent.style.display = 'none';
             detailsPage.classList.add('visible');
+
+            if (mediaType === 'tv') {
+                displaySeasons(mediaId, data.seasons);
+            }
         }
         
+        function displaySeasons(tvId, seasons) {
+            const seasonsContainer = document.getElementById('seasons-container');
+            const seasonOptions = seasons.filter(s => s.season_number > 0).map(s => `<option value="${s.season_number}">Temporada ${s.season_number}</option>`).join('');
+            seasonsContainer.innerHTML = `
+                <div class="flex items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-white">Temporadas</h2>
+                    <select id="season-select" class="bg-gray-800 border border-gray-700 rounded-md p-2 text-white">${seasonOptions}</select>
+                </div>
+                <div id="episodes-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>`;
+            
+            const seasonSelect = document.getElementById('season-select');
+            seasonSelect.addEventListener('change', () => displayEpisodes(tvId, seasonSelect.value));
+            displayEpisodes(tvId, seasonSelect.value); // Carrega os episódios da primeira temporada
+        }
+
+        async function displayEpisodes(tvId, seasonNumber) {
+            const episodesList = document.getElementById('episodes-list');
+            episodesList.innerHTML = `<p class="text-gray-400">Carregando episódios...</p>`;
+            const data = await fetchAPI(`tv/${tvId}/season/${seasonNumber}`);
+            if (data && data.episodes) {
+                episodesList.innerHTML = data.episodes.map(ep => `
+                    <a href="player.html?id=${tvId}&s=${seasonNumber}&e=${ep.episode_number}" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors block">
+                        <p class="font-bold text-white truncate">E${ep.episode_number} - ${ep.name}</p>
+                        <p class="text-xs text-gray-400 mt-1 line-clamp-2">${ep.overview}</p>
+                    </a>
+                `).join('');
+            }
+        }
+
         function hideDetailsPage() {
             detailsPage.classList.remove('visible');
             mainContent.style.display = 'block';
-            detailsContent.innerHTML = '';
-        }
-        
-        // ===================================================================
-        //  FUNÇÃO playMedia ATUALIZADA PARA REDIRECIONAR
-        // ===================================================================
-        function playMedia(mediaId, mediaType) {
-            if (mediaType !== 'movie') {
-                alert('O player para séries ainda não foi implementado. Apenas filmes estão funcionando.');
-                return;
-            }
-            // Simplesmente navega para a nova página, passando o ID do filme
-            window.location.href = `player.html?id=${mediaId}`;
-        }
-        
-        function closeVideoPlayer() {
-            videoModal.classList.add('hidden');
-            videoPlayer.pause();
-            videoPlayer.src = '';
         }
 
-        // --- EVENT LISTENERS ---
-        mainNav.addEventListener('click', (e) => {
+        // --- INICIALIZAÇÃO E EVENTOS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            displayMedia('movie');
+            // Hero slides e outros inits podem vir aqui...
+        });
+        
+        mainNav.addEventListener('click', e => {
             e.preventDefault();
             const target = e.target.closest('a');
             if (!target) return;
@@ -327,40 +182,19 @@
             displayMedia(target.dataset.content === 'series' ? 'tv' : 'movie');
         });
 
-        mediaGrid.addEventListener('click', (event) => {
-            const card = event.target.closest('.movie-card');
-            if (!card) return;
-            showDetailsPage(card.dataset.id, card.dataset.type);
+        mediaGrid.addEventListener('click', e => {
+            const card = e.target.closest('.movie-card');
+            if (card) showDetailsPage(card.dataset.id, card.dataset.type);
         });
 
-        detailsContent.addEventListener('click', (event) => {
-            const watchButton = event.target.closest('.watch-btn');
+        detailsContent.addEventListener('click', e => {
+            const watchButton = e.target.closest('.watch-btn');
             if (watchButton) {
-                playMedia(watchButton.dataset.id, watchButton.dataset.type);
+                window.location.href = `player.html?id=${watchButton.dataset.id}`;
             }
         });
         
-        heroWrapper.addEventListener('click', (event) => {
-            const watchButton = event.target.closest('.watch-btn-hero');
-            if (watchButton) {
-                playMedia(watchButton.dataset.id, watchButton.dataset.type);
-            }
-        });
-
-        searchInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                displaySearchResults(searchInput.value.trim());
-            }
-        });
-
         backBtn.addEventListener('click', hideDetailsPage);
-        closeVideoBtn.addEventListener('click', closeVideoPlayer);
-        
-        // --- INICIALIZAÇÃO DO SITE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            displayHeroSlides();
-            displayMedia('movie');
-        });
     </script>
 </body>
 </html>
