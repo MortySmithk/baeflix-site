@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0A0A0A; }
@@ -34,7 +35,7 @@
                  <video id="player" playsinline controls></video>
             </div>
         </div>
-        <div id="quality-selector-container">
+        <div id="quality-selector-container" class="hidden">
             <h2 class="text-xl font-bold text-white mb-3">Opções de Áudio:</h2>
             <div id="quality-buttons" class="flex flex-wrap gap-3"></div>
         </div>
@@ -50,12 +51,13 @@
         const titleElement = document.getElementById('video-title');
         const descriptionElement = document.getElementById('video-description');
         const playerContainer = document.getElementById('player-container');
+        const qualitySelectorContainer = document.getElementById('quality-selector-container');
         const qualityButtons = document.getElementById('quality-buttons');
         
         let player;
 
-        async function fetchStreamData(url) {
-            for (const baseUrl of url) {
+        async function fetchStreamData(urls) {
+            for (const baseUrl of urls) {
                 try {
                     const response = await fetch(CORS_PROXY + encodeURIComponent(baseUrl));
                     if (response.ok) {
@@ -69,10 +71,7 @@
 
         function loadStreamIntoPlayer(streamUrl) {
             if (player) {
-                player.source = {
-                    type: 'video',
-                    sources: [{ src: streamUrl, type: 'video/mp4' }],
-                };
+                player.source = { type: 'video', sources: [{ src: streamUrl, type: 'video/mp4' }] };
                 player.play();
             }
         }
@@ -82,7 +81,7 @@
             const mediaId = urlParams.get('id');
             const season = urlParams.get('s');
             const episode = urlParams.get('e');
-            const type = season ? 'tv' : 'movie'; // Se tem temporada, é uma série
+            const type = season ? 'tv' : 'movie';
 
             if (!mediaId) {
                 titleElement.textContent = "Erro: ID não encontrado.";
@@ -90,10 +89,8 @@
             }
 
             try {
-                // Inicia o player vazio
                 player = new Plyr('#player');
                 
-                // Busca detalhes do TMDB
                 const detailsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}${type === 'tv' ? `/season/${season}/episode/${episode}` : ''}?api_key=${TMDB_API_KEY}&language=pt-BR`;
                 const detailsResponse = await fetch(detailsUrl);
                 const detailsData = await detailsResponse.json();
@@ -103,38 +100,33 @@
                 descriptionElement.textContent = type === 'tv' ? `Temporada ${season}, Episódio ${episode}` : '';
                 document.title = `Assistindo: ${title} - BAEFLIX`;
 
-                // Busca o IMDb ID
                 const externalIdsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}/external_ids?api_key=${TMDB_API_KEY}`;
                 const idsResponse = await fetch(externalIdsUrl);
                 const idsData = await idsResponse.json();
                 const imdbId = idsData.imdb_id;
                 if (!imdbId) throw new Error("IMDb ID não encontrado.");
 
-                // Monta as URLs de busca de stream
                 const streamUrlsToTry = STREAM_API_URLS[type].map(baseUrl => 
                     type === 'tv' ? `${baseUrl}/${imdbId}:${season}:${episode}.json` : `${baseUrl}/${imdbId}.json`
                 );
                 
-                // Busca os streams
                 const streams = await fetchStreamData(streamUrlsToTry);
                 if (!streams) throw new Error("Nenhum stream encontrado.");
 
+                qualitySelectorContainer.classList.remove('hidden');
                 qualityButtons.innerHTML = '';
                 streams.forEach((stream, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'bg-gray-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors';
                     btn.textContent = stream.description || stream.name || `Opção ${index + 1}`;
                     btn.onclick = () => {
-                        // Remove a classe de 'ativo' de outros botões
                         document.querySelectorAll('#quality-buttons button').forEach(b => b.classList.remove('bg-red-600'));
-                        // Adiciona a classe no botão clicado
                         btn.classList.add('bg-red-600');
                         loadStreamIntoPlayer(stream.url);
                     };
                     qualityButtons.appendChild(btn);
                 });
                 
-                // Carrega o primeiro stream por padrão e o marca como ativo
                 if (qualityButtons.firstChild) {
                     qualityButtons.firstChild.click();
                 }
