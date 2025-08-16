@@ -53,7 +53,7 @@
     </nav>
 </header>
 
-<main class="container mx-auto p-4 md:p-8">
+<main class="container mx-auto p-4 md:p-8 max-w-7xl">
     <div class="mb-4">
         <h1 class="text-2xl md:text-4xl font-black text-white mb-4" id="video-title">Carregando informações do filme...</h1>
     </div>
@@ -70,20 +70,18 @@
 
 <script type="module">
     document.addEventListener('DOMContentLoaded', async () => {
-        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e"; // Sua chave TMDB
+        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
 
         const titleElement = document.getElementById('video-title');
         const playerWrapper = document.getElementById('player-wrapper');
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Supondo que você passe o ID como ?tmdbId=123
         const tmdbId = urlParams.get('tmdbId'); 
-        // Você vai precisar do IMDb ID também, talvez precise buscá-lo primeiro
-        // ou passá-lo na URL, ex: ?tmdbId=123&imdbId=tt0120338
         const imdbId = urlParams.get('imdbId'); 
 
         if (!tmdbId || !imdbId) {
             titleElement.textContent = "Erro: Faltando ID do filme na URL.";
+            playerWrapper.innerHTML = `<div class="absolute inset-0 flex items-center justify-center p-4 text-center"><p class="text-red-400">Não foi possível carregar o filme porque as informações necessárias não foram encontradas na URL. Por favor, volte à página inicial e selecione o filme novamente.</p></div>`;
             return;
         }
 
@@ -97,7 +95,6 @@
             }
 
             // 2. Chama a SUA API na Vercel para pegar o link do stream
-            //    Note a nova URL: /api/stream/movie/{imdbId}
             const streamApiResponse = await fetch(`/api/stream/movie/${imdbId}`);
             if (!streamApiResponse.ok) {
                 throw new Error(`Sua API de stream respondeu com erro: ${streamApiResponse.status}`);
@@ -106,15 +103,13 @@
 
             // 3. Verifica se a API encontrou um link
             if (streamData.streams && streamData.streams.length > 0) {
-                const streamInfo = streamData.streams[0]; // Pega o primeiro stream da lista
+                const streamInfo = streamData.streams[0];
                 const originalStreamUrl = streamInfo.url;
 
                 // 4. PREPARA A URL DO PROXY
-                // O proxy é necessário por causa do behaviorHints.notWebReady:true
                 const proxyUrl = new URL('/api/proxy', window.location.origin);
                 proxyUrl.searchParams.set('videoUrl', originalStreamUrl);
 
-                // Se houver cabeçalhos (headers) necessários, codifica e anexa eles
                 if (streamInfo.behaviorHints?.proxyHeaders?.request) {
                     const headers = streamInfo.behaviorHints.proxyHeaders.request;
                     const encodedHeaders = encodeURIComponent(JSON.stringify(headers));
