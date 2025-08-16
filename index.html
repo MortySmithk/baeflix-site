@@ -220,7 +220,7 @@
             const data = await fetchAPI('movie/popular');
             if (data && data.results) {
                 heroWrapper.innerHTML = '';
-                data.results.slice(0, 5).forEach(media => { // Pega os 5 primeiros
+                data.results.slice(0, 5).forEach(media => {
                     media.media_type = 'movie';
                     heroWrapper.innerHTML += createHeroSlide(media);
                 });
@@ -236,7 +236,7 @@
 
         async function displaySearchResults(query) {
             if (!query) {
-                displayMedia('movie'); // Volta para a visualização padrão
+                displayMedia('movie');
                 return;
             }
             gridTitle.textContent = `Resultados para: "${query}"`;
@@ -299,38 +299,44 @@
             detailsContent.innerHTML = '';
         }
         
-        function playMedia(mediaId, mediaType) {
-            console.log(`Tentando tocar ${mediaType} com ID ${mediaId}`);
+        // ===================================================================
+        //  NOVA FUNÇÃO playMedia CONECTADA À SUA API VERCEL
+        // ===================================================================
+        async function playMedia(mediaId, mediaType) {
+            console.log(`Buscando stream para ${mediaType} com ID ${mediaId}`);
+            const watchButton = document.querySelector(`.watch-btn[data-id="${mediaId}"], .watch-btn-hero[data-id="${mediaId}"]`);
             
-            // ===================================================================
-            //  AQUI É ONDE VOCÊ COLOCA A LÓGICA DA SUA API DE STREAMING
-            // ===================================================================
-            
-            // Por enquanto, usaremos um vídeo de exemplo para o player funcionar.
-            const videoDeExemplo = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-            videoPlayer.src = videoDeExemplo;
-            videoModal.classList.remove('hidden');
+            // A lógica para séries é mais complexa (precisa de temporada/episódio), então vamos focar em filmes por enquanto.
+            if (mediaType !== 'movie') {
+                alert('O player para séries ainda está em desenvolvimento!');
+                return;
+            }
 
-            /* // QUANDO SUA API ESTIVER PRONTA, VOCÊ USARÁ UM CÓDIGO ASSIM:
-            const suaApiUrl = `https://sua-api.com/stream/${mediaType}/${mediaId}`;
+            const apiUrl = `/api/movie?id=${mediaId}`;
             
-            fetch(suaApiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    // Supondo que sua API retorne um JSON com a URL do vídeo
-                    // Ex: { "url": "http://link-do-seu-video.mp4" }
-                    if (data.url) {
-                        videoPlayer.src = data.url;
-                        videoModal.classList.remove('hidden');
-                    } else {
-                        alert("Link de streaming não encontrado na sua API.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Erro ao buscar da sua API de streaming:", error);
-                    alert("Não foi possível carregar o vídeo. Tente novamente mais tarde.");
-                });
-            */
+            try {
+                if (watchButton) watchButton.textContent = 'Carregando...';
+
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`A API respondeu com status ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.streams && data.streams.length > 0) {
+                    const streamUrl = data.streams[0].url; // Pega o primeiro link da lista
+                    console.log("Stream URL encontrada:", streamUrl);
+                    videoPlayer.src = streamUrl;
+                    videoModal.classList.remove('hidden');
+                } else {
+                    alert("Nenhum stream disponível para este título no momento.");
+                }
+            } catch (error) {
+                console.error("Erro ao tentar obter o stream:", error);
+                alert("Ocorreu um erro ao carregar o vídeo. Tente novamente.");
+            } finally {
+                if (watchButton) watchButton.textContent = 'Assistir Agora';
+            }
         }
         
         function closeVideoPlayer() {
@@ -339,7 +345,7 @@
             videoPlayer.src = '';
         }
 
-        // --- EVENT LISTENERS (QUEM FAZ AS COISAS ACONTECEREM) ---
+        // --- EVENT LISTENERS ---
         mainNav.addEventListener('click', (e) => {
             e.preventDefault();
             const target = e.target.closest('a');
