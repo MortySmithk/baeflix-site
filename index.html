@@ -38,42 +38,33 @@
         </div>
 
         <div id="movies-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            </div>
+        </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e"; // Chave da API do TMDB
+            const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
             const moviesGrid = document.getElementById('movies-grid');
             const loadingElement = document.getElementById('loading');
 
-            // Função para buscar os detalhes de um filme (incluindo o imdb_id)
             async function getMovieWithImdbId(movie) {
                 const response = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_API_KEY}&language=pt-BR`);
                 return await response.json();
             }
 
             try {
-                // 1. Busca a lista de filmes populares
                 const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=pt-BR&page=1`);
                 const data = await response.json();
                 
-                // 2. Itera sobre cada filme da lista
                 for (const movie of data.results) {
-                    // Pula filmes sem poster
                     if (!movie.poster_path) continue;
-
-                    // 3. Busca os detalhes do filme para pegar o imdb_id
                     const movieDetails = await getMovieWithImdbId(movie);
                     const imdbId = movieDetails.imdb_id;
                     const tmdbId = movie.id;
 
-                    // Pula se não encontrar o imdb_id
                     if (!imdbId) continue;
 
-                    // 4. Cria o link e o card do filme
                     const movieLink = document.createElement('a');
-                    // AQUI ESTÁ A MÁGICA: Criando a URL com os parâmetros corretos
                     movieLink.href = `/player.html?tmdbId=${tmdbId}&imdbId=${imdbId}`;
 
                     movieLink.innerHTML = `
@@ -89,9 +80,8 @@
 
             } catch (error) {
                 console.error("Erro ao buscar filmes:", error);
-                moviesGrid.innerHTML = '<p class="text-red-500 col-span-full">Não foi possível carregar os filmes. Tente novamente mais tarde.</p>';
+                moviesGrid.innerHTML = '<p class="text-red-500 col-span-full">Não foi possível carregar os filmes.</p>';
             } finally {
-                // Esconde a mensagem de "Carregando"
                 loadingElement.style.display = 'none';
             }
         });
