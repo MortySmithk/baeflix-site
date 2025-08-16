@@ -17,23 +17,31 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0c0c0f; overflow-x: hidden; }
         :root { --swiper-theme-color: #E50914; }
+
         .hero-swiper { width: 100%; height: 85vh; }
-        .swiper-slide { position: relative; display: flex; justify-content: center; align-items: center; }
-        .swiper-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
-        .slide-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(12, 12, 15, 1) 10%, rgba(12, 12, 15, 0.3) 50%, rgba(12, 12, 15, 1) 100%); }
-        .slide-content { position: absolute; bottom: 10%; left: 0; width: 100%; z-index: 10; }
+        .swiper-slide { position: relative; display: flex; align-items: flex-end; }
+        .swiper-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .slide-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(12, 12, 15, 1) 10%, transparent 50%), linear-gradient(to right, rgba(12, 12, 15, 0.7) 10%, transparent 50%); }
+        .slide-content { position: relative; z-index: 10; padding: 2rem 4rem; max-width: 50%; }
+        
         .swiper-button-next, .swiper-button-prev { color: #fff !important; background-color: rgba(0,0,0,0.3); border-radius: 50%; width: 50px; height: 50px; }
         .swiper-button-next:after, .swiper-button-prev:after { font-size: 24px !important; font-weight: bold; }
+        
         .movie-card { position: relative; border-radius: 0.5rem; overflow: hidden; cursor: pointer; transition: transform 0.3s ease; }
         .movie-card:hover { transform: scale(1.05); }
         .card-img { width: 100%; height: 100%; object-fit: cover; }
+        .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background-color: rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s ease; }
+        .movie-card:hover .play-overlay { opacity: 1; }
+        .play-icon { width: 50px; height: 50px; background-color: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
+        
         #details-page { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-color: #0c0c0f; z-index: 60; overflow-y: auto; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1); }
         #details-page.visible { transform: translateX(0); }
-        .backdrop-img { position: absolute; top: 0; left: 0; width: 100%; height: 60vh; object-fit: cover; z-index: -1; }
-        .backdrop-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 60vh; background: linear-gradient(to top, #0c0c0f 15%, transparent 100%); z-index: -1; }
+        .backdrop-img { position: absolute; top: 0; left: 0; width: 100%; height: 70vh; object-fit: cover; z-index: -1; }
+        .backdrop-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 70vh; background: linear-gradient(to top, #0c0c0f 15%, transparent 100%); z-index: -1; }
     </style>
 </head>
 <body class="text-white">
+
     <header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
@@ -48,8 +56,9 @@
             </div>
         </div>
     </header>
-    <main id="main-content" class="pt-20">
-        <section class="relative">
+
+    <main id="main-content">
+        <section class="relative -mt-20">
             <div class="swiper-container hero-swiper">
                 <div class="swiper-wrapper" id="hero-wrapper"></div>
                 <div class="swiper-pagination"></div>
@@ -57,15 +66,17 @@
                 <div class="swiper-button-next"></div>
             </div>
         </section>
-        <section id="content-area" class="container mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-12">
+        <section id="content-area" class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <h2 id="grid-title" class="text-2xl font-bold mb-4">Filmes Populares</h2>
             <div id="media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6"></div>
         </section>
     </main>
+    
     <div id="details-page">
         <button id="back-btn" class="fixed top-6 left-6 z-20 bg-black/50 p-2 rounded-full text-white hover:bg-white/20 transition-colors"> <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> </button>
         <div id="details-content" class="relative"></div>
     </div>
+    
     <script type="module">
         const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
         const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -91,7 +102,26 @@
         function createMediaCard(media) {
             const title = media.title || media.name;
             const posterUrl = media.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${media.poster_path}` : 'https://placehold.co/500x750/1a1a1a/ffffff?text=Capa';
-            return `<div class="aspect-[2/3] movie-card" data-id="${media.id}" data-type="${media.media_type || (media.title ? 'movie' : 'tv')}"><img src="${posterUrl}" alt="Poster de ${title}" class="card-img"></div>`;
+            return `
+                <div class="movie-card" data-id="${media.id}" data-type="${media.title ? 'movie' : 'tv'}">
+                    <img src="${posterUrl}" alt="Poster de ${title}" class="card-img rounded-lg">
+                    <div class="play-overlay"><div class="play-icon"><svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M8 5l8 5-8 5V5z"></path></svg></div></div>
+                </div>`;
+        }
+        
+        function createHeroSlide(media) {
+            const title = media.title || media.name;
+            const backdropUrl = media.backdrop_path ? TMDB_IMAGE_BASE_URL_ORIGINAL + media.backdrop_path : '';
+            return `
+                <div class="swiper-slide">
+                    <img src="${backdropUrl}" alt="${title}">
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        <h1 class="text-4xl md:text-6xl font-black text-white">${title}</h1>
+                        <p class="text-gray-300 my-4 line-clamp-3">${media.overview}</p>
+                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg watch-btn" data-id="${media.id}" data-type="movie">Assistir Agora</button>
+                    </div>
+                </div>`;
         }
 
         async function displayMedia(type = 'movie') {
@@ -108,12 +138,12 @@
             const data = await fetchAPI(`${mediaType}/${mediaId}`);
             const title = data.title || data.name;
             const overview = data.overview || 'Sinopse não disponível.';
-            const backdropUrl = data.backdrop_path ? `${TMDB_IMAGE_BASE_URL_ORIGINAL}${data.backdrop_path}` : '';
-            const posterUrl = data.poster_path ? `${TMDB_IMAGE_BASE_URL_W500}${data.poster_path}` : '';
+            const backdropUrl = data.backdrop_path ? TMDB_IMAGE_BASE_URL_ORIGINAL + data.backdrop_path : '';
+            const posterUrl = data.poster_path ? TMDB_IMAGE_BASE_URL_W500 + data.poster_path : '';
 
             let contentHtml = `
                 <div class="relative"><img src="${backdropUrl}" class="backdrop-img"><div class="backdrop-overlay"></div></div>
-                <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-[40vh] pb-16">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-[45vh] pb-16">
                     <div class="md:flex md:gap-8">
                         <div class="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 -mt-24 md:-mt-32"><img src="${posterUrl}" class="w-full rounded-lg shadow-2xl"></div>
                         <div class="mt-6 md:mt-0 text-center md:text-left">
@@ -145,7 +175,7 @@
             
             const seasonSelect = document.getElementById('season-select');
             seasonSelect.addEventListener('change', () => displayEpisodes(tvId, seasonSelect.value));
-            displayEpisodes(tvId, seasonSelect.value); // Carrega os episódios da primeira temporada
+            displayEpisodes(tvId, seasonSelect.value);
         }
 
         async function displayEpisodes(tvId, seasonNumber) {
@@ -156,7 +186,7 @@
                 episodesList.innerHTML = data.episodes.map(ep => `
                     <a href="player.html?id=${tvId}&s=${seasonNumber}&e=${ep.episode_number}" class="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors block">
                         <p class="font-bold text-white truncate">E${ep.episode_number} - ${ep.name}</p>
-                        <p class="text-xs text-gray-400 mt-1 line-clamp-2">${ep.overview}</p>
+                        <p class="text-xs text-gray-400 mt-1 line-clamp-2">${ep.overview || 'Sem descrição.'}</p>
                     </a>
                 `).join('');
             }
@@ -167,33 +197,19 @@
             mainContent.style.display = 'block';
         }
 
-        // --- INICIALIZAÇÃO E EVENTOS ---
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             displayMedia('movie');
-            // Hero slides e outros inits podem vir aqui...
-        });
-        
-        mainNav.addEventListener('click', e => {
-            e.preventDefault();
-            const target = e.target.closest('a');
-            if (!target) return;
-            mainNav.querySelector('.bg-gray-800').classList.remove('bg-gray-800', 'text-white');
-            target.classList.add('bg-gray-800', 'text-white');
-            displayMedia(target.dataset.content === 'series' ? 'tv' : 'movie');
-        });
-
-        mediaGrid.addEventListener('click', e => {
-            const card = e.target.closest('.movie-card');
-            if (card) showDetailsPage(card.dataset.id, card.dataset.type);
-        });
-
-        detailsContent.addEventListener('click', e => {
-            const watchButton = e.target.closest('.watch-btn');
-            if (watchButton) {
-                window.location.href = `player.html?id=${watchButton.dataset.id}`;
+            const heroData = await fetchAPI('movie/popular');
+            if (heroData && heroData.results) {
+                heroWrapper.innerHTML = heroData.results.slice(0, 5).map(media => createHeroSlide(media)).join('');
+                new Swiper('.hero-swiper', { loop: true, autoplay: { delay: 5000 }, pagination: { el: '.swiper-pagination', clickable: true }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } });
             }
         });
         
+        mainNav.addEventListener('click', e => { e.preventDefault(); const target = e.target.closest('a'); if (!target) return; mainNav.querySelector('.bg-gray-800').classList.remove('bg-gray-800', 'text-white'); target.classList.add('bg-gray-800', 'text-white'); displayMedia(target.dataset.content); });
+        mediaGrid.addEventListener('click', e => { const card = e.target.closest('.movie-card'); if (card) showDetailsPage(card.dataset.id, card.dataset.type); });
+        detailsContent.addEventListener('click', e => { const btn = e.target.closest('.watch-btn'); if (btn) window.location.href = `player.html?id=${btn.dataset.id}`; });
+        heroWrapper.addEventListener('click', e => { const btn = e.target.closest('.watch-btn'); if (btn) window.location.href = `player.html?id=${btn.dataset.id}`; });
         backBtn.addEventListener('click', hideDetailsPage);
     </script>
 </body>
