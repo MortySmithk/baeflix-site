@@ -300,47 +300,15 @@
         }
         
         // ===================================================================
-        //  VERSÃO FINAL DA FUNÇÃO playMedia
+        //  FUNÇÃO playMedia ATUALIZADA PARA REDIRECIONAR
         // ===================================================================
-        async function playMedia(mediaId, mediaType) {
-            console.log(`Buscando stream para ${mediaType} com ID ${mediaId}`);
-            const watchButton = document.querySelector(`.watch-btn[data-id="${mediaId}"], .watch-btn-hero[data-id="${mediaId}"]`);
-            
-            // A lógica para séries é mais complexa (precisa de temporada/episódio), então vamos focar em filmes por enquanto.
+        function playMedia(mediaId, mediaType) {
             if (mediaType !== 'movie') {
                 alert('O player para séries ainda não foi implementado. Apenas filmes estão funcionando.');
                 return;
             }
-
-            const apiUrl = `/api/movie?id=${mediaId}`;
-            
-            try {
-                if (watchButton) watchButton.textContent = 'Carregando...';
-
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`A API respondeu com status ${response.status}`);
-                }
-                const data = await response.json();
-                console.log("Resposta da API de stream:", data); // Para depuração
-
-                // A resposta tem um array chamado "streams"
-                if (data.streams && data.streams.length > 0) {
-                    // Dentro de cada item do array, o link está na propriedade "url"
-                    const streamUrl = data.streams[0].url; 
-                    console.log("URL do Stream encontrada:", streamUrl);
-                    
-                    videoPlayer.src = streamUrl;
-                    videoModal.classList.remove('hidden');
-                } else {
-                    alert("Nenhum stream disponível para este título no momento.");
-                }
-            } catch (error) {
-                console.error("Erro ao tentar obter o stream:", error);
-                alert("Ocorreu um erro ao carregar o vídeo. Tente novamente.");
-            } finally {
-                if (watchButton) watchButton.textContent = 'Assistir Agora';
-            }
+            // Simplesmente navega para a nova página, passando o ID do filme
+            window.location.href = `player.html?id=${mediaId}`;
         }
         
         function closeVideoPlayer() {
