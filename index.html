@@ -300,7 +300,7 @@
         }
         
         // ===================================================================
-        //  NOVA FUNÇÃO playMedia CONECTADA À SUA API VERCEL
+        //  VERSÃO FINAL DA FUNÇÃO playMedia
         // ===================================================================
         async function playMedia(mediaId, mediaType) {
             console.log(`Buscando stream para ${mediaType} com ID ${mediaId}`);
@@ -308,7 +308,7 @@
             
             // A lógica para séries é mais complexa (precisa de temporada/episódio), então vamos focar em filmes por enquanto.
             if (mediaType !== 'movie') {
-                alert('O player para séries ainda está em desenvolvimento!');
+                alert('O player para séries ainda não foi implementado. Apenas filmes estão funcionando.');
                 return;
             }
 
@@ -322,10 +322,14 @@
                     throw new Error(`A API respondeu com status ${response.status}`);
                 }
                 const data = await response.json();
+                console.log("Resposta da API de stream:", data); // Para depuração
 
+                // A resposta tem um array chamado "streams"
                 if (data.streams && data.streams.length > 0) {
-                    const streamUrl = data.streams[0].url; // Pega o primeiro link da lista
-                    console.log("Stream URL encontrada:", streamUrl);
+                    // Dentro de cada item do array, o link está na propriedade "url"
+                    const streamUrl = data.streams[0].url; 
+                    console.log("URL do Stream encontrada:", streamUrl);
+                    
                     videoPlayer.src = streamUrl;
                     videoModal.classList.remove('hidden');
                 } else {
