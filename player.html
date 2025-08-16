@@ -6,137 +6,128 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Carregando... - BAEFLIX</title>
     <link href="https://i.ibb.co/PGJ87dN5/cineveo-logo-r.png" rel="icon" type="image/png"/>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0A0A0A; }
-        :root { --plyr-color-main: #E50914; --plyr-font-family: 'Inter', sans-serif; }
-        .loader { border: 4px solid #4A4A4A; border-top: 4px solid #E50914; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0A0A0A;
+        }
+        .player-wrapper {
+            position: relative;
+            padding-top: 56.25%; /* Proporção 16:9 */
+            height: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        .player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #E50914;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-black text-gray-300">
-    <header class="bg-gray-900/50 backdrop-blur-md shadow-lg sticky top-0 z-40 border-b border-gray-800">
-        <nav class="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-            <a aria-label="Página Inicial" href="/index.html"> <img alt="Logo BAEFLIX" class="h-16 w-auto" src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png"/> </a>
-        </nav>
-    </header>
-    <main class="container mx-auto p-4 md:p-8">
-        <div class="mb-4">
-            <h1 class="text-2xl md:text-4xl font-black text-white mb-2" id="video-title">Carregando...</h1>
-            <p class="text-gray-400" id="video-description"></p>
-        </div>
-        <div id="player-container" class="w-full bg-black rounded-lg shadow-2xl overflow-hidden mb-6">
-            <div class="aspect-video w-full">
-                 <video id="player" playsinline controls></video>
+
+<header class="bg-gray-900/50 backdrop-blur-md shadow-lg sticky top-0 z-40 border-b border-gray-800">
+    <nav class="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <a aria-label="Página Inicial" href="/index.html">
+            <img alt="Logo BAEFLIX" class="h-16 w-auto" src="https://i.ibb.co/XrGt6ymb/Chat-GPT-Image-14-de-ago-de-2025-23-47-40.png"/>
+        </a>
+    </nav>
+</header>
+
+<main class="container mx-auto p-4 md:px-8 max-w-7xl">
+    <div class="mb-4">
+        <h1 class="text-2xl md:text-4xl font-black text-white mb-4" id="video-title">Carregando informações...</h1>
+    </div>
+
+    <div id="player-container" class="w-full bg-black rounded-lg shadow-2xl overflow-hidden mb-8">
+        <div class="player-wrapper" id="player-wrapper">
+            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                <div class="loader"></div>
+                <p class="mt-4 text-gray-400">Buscando link do stream...</p>
             </div>
         </div>
-        <div id="quality-selector-container" class="hidden">
-            <h2 class="text-xl font-bold text-white mb-3">Opções de Áudio:</h2>
-            <div id="quality-buttons" class="flex flex-wrap gap-3"></div>
-        </div>
-    </main>
-    <script type="module">
-        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e";
-        const STREAM_API_URLS = {
-            movie: ["https://baby-beamup.club/stream/movie", "https://da5f663b4690-skyflixfork.baby-beamup.club/stream/movie"],
-            tv: ["https://baby-beamup.club/stream/series", "https://da5f663b4690-skyflixfork.baby-beamup.club/stream/series"]
-        };
-        const CORS_PROXY = "https://corsproxy.io/?";
+    </div>
+</main>
+
+<script type="module">
+    document.addEventListener('DOMContentLoaded', async () => {
+        // IMPORTANT: Replace with your actual TMDB API Key
+        const TMDB_API_KEY = "cf64e357f3a003e17687bb93cb692d6e"; 
 
         const titleElement = document.getElementById('video-title');
-        const descriptionElement = document.getElementById('video-description');
-        const playerContainer = document.getElementById('player-container');
-        const qualitySelectorContainer = document.getElementById('quality-selector-container');
-        const qualityButtons = document.getElementById('quality-buttons');
-        
-        let player;
+        const playerWrapper = document.getElementById('player-wrapper');
 
-        async function fetchStreamData(urls) {
-            for (const baseUrl of urls) {
-                try {
-                    const response = await fetch(CORS_PROXY + encodeURIComponent(baseUrl));
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.streams && data.streams.length > 0) return data.streams;
-                    }
-                } catch (e) { console.warn(`Falha ao buscar de ${baseUrl}`, e); }
-            }
-            return null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const tmdbId = urlParams.get('id');
+
+        if (!tmdbId) {
+            titleElement.textContent = "Erro: ID do conteúdo não encontrado na URL.";
+            playerWrapper.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><p class="text-red-500">Não foi possível carregar o player.</p></div>`;
+            return;
         }
 
-        function loadStreamIntoPlayer(streamUrl) {
-            if (player) {
-                player.source = { type: 'video', sources: [{ src: streamUrl, type: 'video/mp4' }] };
-                player.play();
+        try {
+            // Fetch movie details from TMDB to display the title
+            const tmdbDetailsResponse = await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=pt-BR`);
+            if (!tmdbDetailsResponse.ok) {
+                 throw new Error(`Erro ao buscar detalhes do filme: ${tmdbDetailsResponse.status}`);
             }
+            const movieDetails = await tmdbDetailsResponse.json();
+            
+            if (movieDetails.title) {
+                titleElement.textContent = movieDetails.title;
+                document.title = `Assistindo: ${movieDetails.title} - BAEFLIX`;
+            }
+
+            // Call your Firebase Function API to get the stream link
+            const streamApiResponse = await fetch(`/api/movie?id=${tmdbId}`);
+            if (!streamApiResponse.ok) {
+                throw new Error(`Sua API (Firebase Function) respondeu com um erro: ${streamApiResponse.status}`);
+            }
+            const streamData = await streamApiResponse.json();
+
+            // Check if the API returned a valid stream URL
+            if (streamData.streams && streamData.streams.length > 0 && streamData.streams[0].url) {
+                const streamUrl = streamData.streams[0].url;
+                console.log("Stream URL recebida:", streamUrl);
+
+                // Create the iframe and place it in the player
+                playerWrapper.innerHTML = `
+                    <iframe 
+                        id="video-player-iframe" 
+                        src="${streamUrl}" 
+                        allowfullscreen 
+                        allow="autoplay; encrypted-media"
+                    ></iframe>
+                `;
+            } else {
+                throw new Error(streamData.error || "Nenhum stream disponível foi encontrado pela sua API.");
+            }
+        } catch (error) {
+            console.error("Erro final ao carregar o player:", error);
+            titleElement.textContent = "Erro ao Carregar o Filme";
+            playerWrapper.innerHTML = `<div class="absolute inset-0 flex items-center justify-center text-center p-4"><p class="text-red-500">${error.message}</p></div>`;
         }
+    });
+</script>
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const mediaId = urlParams.get('id');
-            const season = urlParams.get('s');
-            const episode = urlParams.get('e');
-            const type = season ? 'tv' : 'movie';
-
-            if (!mediaId) {
-                titleElement.textContent = "Erro: ID não encontrado.";
-                return;
-            }
-
-            try {
-                player = new Plyr('#player');
-                
-                const detailsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}${type === 'tv' ? `/season/${season}/episode/${episode}` : ''}?api_key=${TMDB_API_KEY}&language=pt-BR`;
-                const detailsResponse = await fetch(detailsUrl);
-                const detailsData = await detailsResponse.json();
-                
-                const title = detailsData.title || detailsData.name;
-                titleElement.textContent = title;
-                descriptionElement.textContent = type === 'tv' ? `Temporada ${season}, Episódio ${episode}` : '';
-                document.title = `Assistindo: ${title} - BAEFLIX`;
-
-                const externalIdsUrl = `https://api.themoviedb.org/3/${type}/${mediaId}/external_ids?api_key=${TMDB_API_KEY}`;
-                const idsResponse = await fetch(externalIdsUrl);
-                const idsData = await idsResponse.json();
-                const imdbId = idsData.imdb_id;
-                if (!imdbId) throw new Error("IMDb ID não encontrado.");
-
-                const streamUrlsToTry = STREAM_API_URLS[type].map(baseUrl => 
-                    type === 'tv' ? `${baseUrl}/${imdbId}:${season}:${episode}.json` : `${baseUrl}/${imdbId}.json`
-                );
-                
-                const streams = await fetchStreamData(streamUrlsToTry);
-                if (!streams) throw new Error("Nenhum stream encontrado.");
-
-                qualitySelectorContainer.classList.remove('hidden');
-                qualityButtons.innerHTML = '';
-                streams.forEach((stream, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'bg-gray-700 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors';
-                    btn.textContent = stream.description || stream.name || `Opção ${index + 1}`;
-                    btn.onclick = () => {
-                        document.querySelectorAll('#quality-buttons button').forEach(b => b.classList.remove('bg-red-600'));
-                        btn.classList.add('bg-red-600');
-                        loadStreamIntoPlayer(stream.url);
-                    };
-                    qualityButtons.appendChild(btn);
-                });
-                
-                if (qualityButtons.firstChild) {
-                    qualityButtons.firstChild.click();
-                }
-                
-            } catch (error) {
-                console.error("Erro ao carregar o player:", error);
-                titleElement.textContent = "Erro ao carregar";
-                descriptionElement.textContent = error.message;
-            }
-        });
-    </script>
 </body>
 </html>
